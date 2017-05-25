@@ -19,57 +19,48 @@ public class DoubleHash {
     }
 
     public Object get(String key){
-        int h1 = key.hashCode();
-        if (h1 < 0) h1 *= -1;
-        h1 = h1 % tab.length;
-        int h2 = key.charAt(0) % tab.length;
-        if(h2 == 0) h2 = 1;
+        int h1 = hashOne(key);
+        int h2 = hashTwo(key);
+        int hash = h1;
         int n = 0;
-        while(tab[h1] != null && !tab[h1].key.equals(key)){
+        while(tab[hash] != null && !tab[hash].key.equals(key)){
             n++;
-            h1 += h2 * n;
-            while(h1 >= tab.length -1){
-                h1 -= (tab.length - 1);
-            }
+            hash = (h1 + n * h2) % tab.length;
         }
-        if(tab[h1] == null) return null;
-        else return tab[h1];
+        if(tab[hash] == null) return null;
+        else return tab[hash];
     }
 
     public void put(String key, Object value){
         resize();
-        int h1 = key.hashCode();
-        if (h1 < 0) h1 *= -1;
-        h1 = h1 % tab.length;
-        int h2 = key.charAt(0) % tab.length;
-        if(h2 == 0) h2 = 1;
+        int h1 = hashOne(key);
+        int h2 = hashTwo(key);
+        int hash = h1;
         int n = 0;
-        while(tab[h1] != null){
-            n++;
-            h1 += h2 * n;
-            while(h1 >= tab.length -1){
-                h1 -= (tab.length - 1);
+        while(tab[hash] != null){
+            if(tab[hash].key.equals(key)){
+                throw new DuplicateException();
             }
+            n++;
+            hash = (h1 + n * h2) % tab.length;
         }
-        tab[h1] = new Element(key, value);
+        tab[hash] = new Element(key, value);
         size ++;
     }
 
     private void put(String key, Object value, Element[] tab){
-        int h1 = key.hashCode();
-        if (h1 < 0) h1 *= -1;
-        h1 = h1 % tab.length;
-        int h2 = key.charAt(0) % tab.length;
-        if(h2 == 0) h2 = 1;
+        int h1 = hashOne(key, tab);
+        int h2 = hashTwo(key, tab);
+        int hash = h1;
         int n = 0;
-        while(tab[h1] != null){
-            n++;
-            h1 += h2 * n;
-            while(h1 >= tab.length -1){
-                h1 -= (tab.length - 1);
+        while(tab[hash] != null){
+            if(tab[hash].key.equals(key)){
+                throw new DuplicateException();
             }
+            n++;
+            hash = (h1 + n * h2) % tab.length;
         }
-        tab[h1] = new Element(key, value);
+        tab[hash] = new Element(key, value);
     }
 
     public boolean containsKey(String key){
@@ -120,6 +111,36 @@ public class DoubleHash {
         sb.delete(sb.length() - 2, sb.length());
         sb.append("]");
         System.out.println(sb.toString());
+    }
+
+    private int hashOne(String key){
+        return Math.abs(key.hashCode()) % tab.length;
+    }
+
+    private int hashOne(String key, Element[] tab){
+        return Math.abs(key.hashCode()) % tab.length;
+    }
+
+    private int hashTwo(String key){
+        char[] ch = key.toCharArray();
+        int sum = 0;
+        for (int i = 0; i < ch.length; i++) {
+            sum += ch[i];
+        }
+        sum = sum % tab.length;
+        if (sum == 0) sum = 1;
+        return sum;
+    }
+
+    private int hashTwo(String key, Element[] tab){
+        char[] ch = key.toCharArray();
+        int sum = 0;
+        for (int i = 0; i < ch.length; i++) {
+            sum += ch[i];
+        }
+        sum = sum % tab.length;
+        if (sum == 0) sum = 1;
+        return sum;
     }
 
     private class Element{
